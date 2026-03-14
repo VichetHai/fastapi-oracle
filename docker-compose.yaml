@@ -1,8 +1,35 @@
-version: '3'
+version: '3.8'
+
 services:
   api:
-    image: fastapi-oracle-image
+    build: .
     ports:
       - 8000:80
     env_file:
       - .env
+    volumes:
+      - ./app:/code/app
+      - ./alembic:/code/alembic
+      - ./alembic.ini:/code/alembic.ini
+    depends_on:
+      oracle:
+        condition: service_healthy
+
+  oracle:
+    image: gvenzl/oracle-free:slim-faststart
+    environment:
+      - ORACLE_PASSWORD=myadminpassword
+      - APP_USER=myuser
+      - APP_USER_PASSWORD=mypassword
+    ports:
+      - "1521:1521"
+    healthcheck:
+      test: ["CMD-SHELL", "healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+
+volumes:
+  oracle-data:
